@@ -4,13 +4,8 @@ import SurveyField from "./SurveyField";
 import _ from "lodash";
 import { Link } from "react-router-dom";
 import validateEmail from "../../utils/validateEmail";
+import FIELDS from "./formFields";
 
-const FIELDS = [
-  { label: "Survey title", name: "title" },
-  { label: "Subject line", name: "subject" },
-  { label: "Email body", name: "body" },
-  { label: "Recipient list", name: "emails" }
-];
 class SurveyForm extends Component {
   renderFields() {
     return _.map(FIELDS, ({ label, name }) => {
@@ -29,7 +24,7 @@ class SurveyForm extends Component {
   render() {
     return (
       <div>
-        <form onSubmit={this.props.handleSubmit(values => console.log(values))}>
+        <form onSubmit={this.props.handleSubmit(this.props.onSubmitForm)}>
           {this.renderFields()}
           <Link to="/surveys" className="red btn-flat white-text">
             Cancel
@@ -60,5 +55,6 @@ function validate(values) {
 
 export default reduxForm({
   validate,
-  form: "surveyForm"
+  form: "surveyForm",
+  destroyOnUnmount: false
 })(SurveyForm);
