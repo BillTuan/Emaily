@@ -10,7 +10,15 @@ const mongoose = require("mongoose");
 const Survey = mongoose.model("surveys");
 
 module.exports = app => {
-  app.get("/api/surveys/thanks", (req, res) => {
+  app.get("/api/surveys", requireLogin, async (req, res) => {
+    const surveys = await Survey.find({ _user: req.user.id }).select({
+      recipients: false
+    });
+
+    res.send(surveys);
+  });
+
+  app.get("/api/surveys/thanks/:surveyId/:choice", (req, res) => {
     res.send("Thanks for feedback!");
   });
 
@@ -45,19 +53,32 @@ module.exports = app => {
 
   app.post("/api/surveys/webhooks", (req, res) => {
     const p = new Path("/api/surveys/:surveyId/:choice");
-    const events = _.chain(req.body)
+    _.chain(req.body)
       .map(({ email, url }) => {
         const match = p.test(new URL(url).pathname);
         if (match) {
           return { email, surveyId: match.surveyId, choice: match.choice };
         }
       })
-      .compact(events)
-      .uniqBy(compactEvents, "email", "surveyId")
+      .compact()
+      .uniqBy("email", "surveyId")
+      .each(({ surveyId, email, choice }) => {
+        Survey.updateOne(
+          {
+            _id: surveyId,
+            recipients: {
+              $elemMatch: { email: email, responded: false }
+            }
+          },
+          {
+            $inc: { [choice]: 1 },
+            $set: { "recipients.$.responded": true },
+            lastResponded: new Date()
+          }
+        ).exec();
+      })
       .value();
 
-    console.log("====================================");
-    console.log(events);
-    console.log("====================================");
+    res.send({});
   });
 };
