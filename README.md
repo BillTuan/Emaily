@@ -1,3 +1,2 @@
-## React-Emaily
-Web application with React/Redux + Nodejs
+## Emaily
 Create surveys and send to customers an email request feedback. 
